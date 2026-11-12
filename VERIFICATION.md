@@ -15,6 +15,11 @@
 - All disposable Auth users, articles, images, profiles and test audit entries were removed. Independent SQL check confirmed zero remaining test accounts.
 - The temporary integration endpoint was overwritten with an inert handler and JWT gateway verification enabled.
 - Owner confirmed the Auth URL configuration; an HTTP redirect probe verified the SANN destination.
+- First owner account invited and assigned the active Administrator role. Owner invitation was accepted by Supabase for sending; inbox receipt and the owner's password selection remain the owner's actions.
+- Browser: signed in with a disposable account, opened Dashboard, created a Tiptap draft, reloaded and verified the saved Russian text, published the story and loaded Administration with roles/settings/audit data.
+- Browser: public articles and author details render; an article direct link survives reload; archive search filters six stories to the matching result; unauthenticated Newsroom access redirects to sign-in.
+- Browser: mobile menu and public layouts checked at 390 px. Document width did not exceed viewport width. Temporary viewport override reset.
+- All browser test records and the temporary test account were removed. The UI test endpoint was overwritten with an inert handler.
 
 ## Operational notes
 
@@ -22,4 +27,4 @@ The connected project is tjupwfuycqeplizcmibv. Only its public publishable key i
 
 Performance Advisor reported informational unused-index notices on the newly created, initially empty tables. These indexes support the intended feed, author, media-reference and review queries and were retained.
 
-The initial Windows-native browser attempt was blocked by URL detection. In-app browser access became available later; final browser observations and deployment are recorded in DEPLOYMENT.md. API tests alone do not prove complete responsive/accessibility behavior or email deliverability.
+The initial Windows-native browser attempt was blocked by URL detection. In-app browser access became available later and the browser checks above were completed. These targeted checks do not constitute a full WCAG audit or verify the owner's email inbox. The owner's password is never generated, read or reported by the assistant.

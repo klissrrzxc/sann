@@ -830,8 +830,9 @@ export function Administration() {
       >
         <h2>Staff access</h2>
         <p>
-          Invite the employee through Supabase Authentication first, then assign
-          their user UUID here. No public registration is provided.
+          Adjust existing staff access here, or assign a user invited through
+          the Supabase dashboard. New invitations can be sent using the form
+          above.
         </p>
         <label>
           Existing staff

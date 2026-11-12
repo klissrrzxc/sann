@@ -91,7 +91,7 @@ function EditorForm({ id }: { id?: string }) {
     },
   });
   useEffect(() => {
-    editor?.setEditable(editable);
+    editor?.setEditable(editable, false);
   }, [editor, editable]);
   useEffect(() => {
     if (!id || !editor) return;
