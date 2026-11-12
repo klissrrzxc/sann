@@ -11,7 +11,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.0.0",
+    "@supabase/supabase-js": "2.119.0",
     "@tailwindcss/vite": "^4.0.0",
     "@tiptap/extension-image": "^3.0.0",
     "@tiptap/react": "^3.0.0",

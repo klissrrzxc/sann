@@ -714,6 +714,9 @@ export function Administration() {
     [name, setName] = useState(""),
     [assigned, setAssigned] = useState<Role>("junior_journalist"),
     [active, setActive] = useState(true),
+    [inviteEmail, setInviteEmail] = useState(""),
+    [inviteName, setInviteName] = useState(""),
+    [inviteRole, setInviteRole] = useState<Role>("junior_journalist"),
     [logs, setLogs] = useState<
       { id: number; action: string; actor_id: string; created_at: string }[]
     >([]),
@@ -748,6 +751,71 @@ export function Administration() {
     <>
       <DeskHeading title="Administration" />
       {error && <p className="error">{error}</p>}
+      <ActionForm
+        onSubmit={async () => {
+          const { data, error } = await requireDb().functions.invoke(
+            "staff-admin",
+            {
+              body: {
+                email: inviteEmail,
+                rp_name: inviteName,
+                role: inviteRole,
+              },
+            },
+          );
+          if (error) {
+            let reason = error.message;
+            try {
+              const body = await error.context?.json();
+              if (body?.error) reason = body.error;
+            } catch {
+              /* Keep the SDK error when no JSON response is available. */
+            }
+            throw new Error(reason);
+          }
+          if (data?.error) throw new Error(data.error);
+          setInviteEmail("");
+          setInviteName("");
+          refresh();
+        }}
+      >
+        <h2>Invite a journalist</h2>
+        <p>
+          Send a secure email invitation and assign editorial access. The
+          recipient chooses their own password.
+        </p>
+        <label>
+          Email
+          <input
+            type="email"
+            required
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+          />
+        </label>
+        <label>
+          RP Name
+          <input
+            required
+            maxLength={100}
+            value={inviteName}
+            onChange={(e) => setInviteName(e.target.value)}
+          />
+        </label>
+        <label>
+          Editorial role
+          <select
+            value={inviteRole}
+            onChange={(e) => setInviteRole(e.target.value as Role)}
+          >
+            {roles.map((r) => (
+              <option value={r} key={r}>
+                {label(r)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </ActionForm>
       <ActionForm
         onSubmit={async () => {
           const { error } = await requireDb().rpc("admin_staff", {

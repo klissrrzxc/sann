@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@supabase/supabase-js':
-        specifier: ^2.0.0
+        specifier: 2.119.0
         version: 2.119.0
       '@tailwindcss/vite':
         specifier: ^4.0.0

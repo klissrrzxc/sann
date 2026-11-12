@@ -4,7 +4,7 @@ A React/TypeScript editorial platform for one fictional GTA RolePlay server. Eng
 
 ## Current delivery status
 
-Source, SQL migrations, local PostgreSQL security tests and Pages deployment workflow are included. A production build is not proof of an operational cloud installation. A cloud project, invited administrator and successful Pages deployment are required before the platform can be used. See `VERIFICATION.md` for the verified state and remaining checks.
+The application is deployed on GitHub Pages and connected to a real Supabase project. Cloud RLS and HTTP integration checks have passed, including real staff sign-in and private Storage operations. See `VERIFICATION.md` and `DEPLOYMENT.md` for the exact verification scope and owner onboarding status.
 
 ## Local development
 
@@ -31,13 +31,13 @@ pnpm build
 ## Configure Supabase
 
 1. Use a Supabase project you own. Review the additive migration before applying it to a project that already contains tables with the same names. It creates tables and enum types; it is intended for a clean app schema, not to overwrite an existing application.
-2. In SQL Editor, execute `supabase/migrations/001_newsroom.sql` once. Alternatively, initialize/link the Supabase CLI for your project and use `supabase db push`.
+2. In SQL Editor, execute `supabase/migrations/001_newsroom.sql` once. This file is a consolidated SQL bootstrap for a fresh installation. The connected project already has migration history recorded by MCP; do not reapply the bootstrap to it. Baseline/match that history before adopting a CLI migration workflow.
 3. In Authentication settings, **disable public signups**. Use email/password authentication and invitation-only staff onboarding. Configure SMTP for reliable invitations and recovery messages.
-4. Set Auth Site URL to the deployed origin plus `/sann/`; add that exact URL and the local development URL to the allowed redirect URLs. Supabase consumes invitation/recovery tokens before the hash router starts; after accepting an invitation/recovery link, open Newsroom → Account Settings to set your password. This flow still requires cloud verification.
+4. Set Auth Site URL to the deployed origin plus `/sann/`; add that exact URL and the local development URL to the allowed redirect URLs. Supabase consumes invitation/recovery tokens before the hash router starts; after accepting an invitation/recovery link, open Newsroom → Account Settings to set your password. The owner must complete their own email invitation and choose their password. Never share those credentials with an assistant.
 5. Put the project URL and **anon/publishable key** in `.env`. Never use a secret/service_role key in Vite variables, client code, repository variables or the browser.
 6. Storage uses a private `newsroom` bucket, 5 MB limit, JPEG/PNG/WebP MIME allowlist. The browser validates and decodes images, resizes to 2400px and converts to WebP before upload. Signed download URLs expire in one hour; reload a long-open page if an image expires.
 
-The migration uses RLS for reads and revokes direct application-table writes. Authenticated writes use named SQL functions with fixed `search_path`, role checks and server-side validation. Functions are explicitly revoked from PUBLIC and granted only to intended roles. Public profiles contain RP fields only; email addresses remain in Supabase Auth.
+The migration uses RLS for reads and revokes direct application-table writes. Authenticated writes use SECURITY INVOKER wrappers over privileged implementations in the non-exposed `private` schema, with fixed `search_path`, role checks and server-side validation. Functions are explicitly revoked from PUBLIC and granted only to intended roles. Public profiles contain RP fields only; email addresses remain in Supabase Auth.
 
 ### First administrator
 
@@ -47,7 +47,7 @@ The migration uses RLS for reads and revokes direct application-table writes. Au
 
 ### Add staff
 
-The owner invites a user through Supabase Authentication. An authenticated SANN administrator then enters that user's UUID and RP name in Newsroom → Administration and assigns a role. This deliberate two-step process avoids distributing a service_role key or exposing an unrestricted invitation endpoint. Deactivating staff blocks database writes immediately, even if their Auth session has not expired. Change roles through Administration; users cannot edit their own role directly.
+An authenticated SANN administrator uses Newsroom → Administration → Invite a journalist to send an email invitation and assign a role. The `staff-admin` Edge Function validates the session with Auth `getUser`, checks the current active administrator assignment, and keeps the service key entirely inside the Edge runtime. Its gateway legacy-JWT check is disabled because the handler performs its own verified user authentication; requests without a valid staff token are rejected. Deploy its supplied source and import map when installing a new copy. As a fallback, invite through Supabase Authentication and assign the invited UUID in Staff access. Deactivating staff blocks database writes immediately, even if their Auth session has not expired. Change roles through Administration; users cannot edit their own role directly.
 
 ## Editorial workflow
 
@@ -61,7 +61,7 @@ The owner invites a user through Supabase Authentication. An authenticated SANN 
 
 Junior submissions lock while pending review. An editor can publish or return them with a required comment. A senior can publish their own work. The article editor includes draft saving, category, tags, subtitles, cover/caption, headings, emphasis, lists, quotes, inline images, preview and an unsaved-changes warning. Featured stories are controlled by editors through the article editor; the lead is the first featured published article in the feed.
 
-`save_article` locks the row and checks the expected version. The entire story, tags, image references, review and audit event commit together. A stale save receives a conflict error; copy unsaved text before reloading and reconciling it. There is no silent last-write-wins overwrite. Content uses Tiptap JSON; the public renderer constructs whitelisted React elements and never injects HTML.
+`save_article` locks the row and checks the expected version. The entire story, tags, image references, review and audit event commit together. A stale save receives HTTP 409 (`PT409`), rather than a transaction retry error; copy unsaved text before reloading and reconciling it. There is no silent last-write-wins overwrite. Content uses Tiptap JSON; the public renderer constructs whitelisted React elements and never injects HTML.
 
 The Media Library is shared among active staff. Public visitors can retrieve only images referenced by published articles. Deletion reserves the asset under a row lock before the Storage API call; article saves reject reserved images. Referenced assets cannot be deleted, including references in drafts. If Storage deletion fails, the reserved asset remains visible in the library; its owner can retry deletion. An upload whose metadata registration fails is an orphan that the project owner must remove from Storage after checking references.
 
@@ -97,6 +97,6 @@ The index includes general description/Open Graph metadata and the reader update
 - **Pages 404:** check Pages is enabled, Actions succeeded, and the project path is `/sann/`. Article paths require the `#` segment.
 - **Pages unavailable on private repository:** review the GitHub plan or ask the owner to choose repository visibility/hosting.
 
-Local security tests run real SQL through PGlite with minimal Supabase Auth/Storage schema stubs. They do not verify the hosted Auth service, HTTP Storage API, actual SMTP, signed URL delivery, cloud RLS configuration or production browser behavior. These require the connected Supabase project and deployed application.
+Local security tests run real SQL through PGlite with minimal Supabase Auth/Storage schema stubs. `tests/cloud-rls-rollback.sql` verifies actual hosted RLS in a rolled-back transaction. `tests/cloud-api-check.edge.ts` is a trusted, disposable Edge integration harness: it requires a strong one-time authentication digest, creates temporary accounts without sending email, exercises real Auth/REST/Storage, and removes only its own fixtures. Never enable this harness without the guard or leave it active; the deployed test endpoint was replaced with an inert handler after verification. Cloud checks do not replace the owner's email/password onboarding or complete keyboard/mobile visual QA.
 
 Official references: [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [Vite GitHub Pages deployment](https://vite.dev/guide/static-deploy#github-pages).

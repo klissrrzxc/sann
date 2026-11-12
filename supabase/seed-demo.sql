@@ -2,12 +2,12 @@
 -- Uses the existing administrator as author. Does not create auth users or grant roles.
 -- All seeded articles carry is_demo=true. Run once after administrator bootstrap.
 begin;
-insert into public.articles(slug,author_id,title,subtitle,category,content,status,featured,is_demo,published_at)
+insert into public.articles(slug,author_id,title,subtitle,category,content,status,featured,is_demo,published_at,cover_path,cover_caption)
 select s.slug,owner.user_id,s.title,s.subtitle,s.category,
 jsonb_build_object('type','doc','content',jsonb_build_array(
  jsonb_build_object('type','paragraph','content',jsonb_build_array(jsonb_build_object('type','text','text','Демонстрационная RP-новость. Все события и организации описаны в вымышленном игровом контексте GTA RolePlay.'))),
  jsonb_build_object('type','paragraph','content',jsonb_build_array(jsonb_build_object('type','text','text',s.subtitle)))
-)), 'published',s.featured,true,now()-s.age*interval '1 hour'
+)), 'published',s.featured,true,now()-s.age*interval '1 hour',case when s.category='crime-justice' then 'illustration:night' when s.category='business' or s.category='entertainment' then 'illustration:event' else 'illustration:city' end,'Original SANN illustration · Fictional GTA RolePlay setting'
 from (values
  ('rp-blackfield','BLACKFIELD: редакция проверяет сообщения о предполагаемой деятельности','Публикация содержит вымышленные предположения внутри GTA RolePlay. Обвинения не установлены.','investigations',true,1),
  ('rp-b-experia','B-EXPERIA представила программу деловых мероприятий','Вымышленные предприниматели Лос-Сантоса обсуждают новые городские проекты.','business',false,2),
